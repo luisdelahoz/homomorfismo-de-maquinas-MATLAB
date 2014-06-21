@@ -116,9 +116,6 @@ function cargarDatosTabla(lista, tabla)
     end
     
  function [] =  quitarElementoLista(valorSeleccionado, lista)
-     listaString = get(lista, 'String');
-     tamanio = size(listaString);
-     listaNueva(1:tamanio) = 'a';
      
       
 % --- Executes on selection change in listbox1.
