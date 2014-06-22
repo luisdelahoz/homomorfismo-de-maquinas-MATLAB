@@ -75,6 +75,7 @@ varargout{1} = handles.output;
 % --- Executes on button press in botonCargarDatosMaquina1.
 function botonCargarDatosMaquina1_Callback(hObject, eventdata, handles)
     cargarDatosTabla(handles.listaEstadosMaquina1Seleccionados, handles.tablaMaquina1);
+    cargarTablaHomomorfismo(handles);
 % hObject    handle to botonCargarDatosMaquina1 (see GCBO)
 % eventdata  reserved - to be defined in a http://www.marca.com/future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -92,10 +93,10 @@ function botonCargarDatosMaquina2_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 function [] = agregarElementoLista(listaA, listaB)
-  estadosA = get(listaA, 'String')
-  valorSeleccionado = get(listaA, 'Value')
-  estadosB = get(listaB, 'String')
-  tamanio = size(estadosB)
+  estadosA = get(listaA, 'String');
+  valorSeleccionado = get(listaA, 'Value');
+  estadosB = get(listaB, 'String');
+  tamanio = size(estadosB);
   for i = 1:tamanio
       if strcmp(estadosB(i), 'Vacio')
           estadosB(i) = estadosA(valorSeleccionado);
@@ -133,7 +134,26 @@ function [] =  quitarElementoLista(lista)
     valorSeleccionado = get(lista, 'Value')
     estados(valorSeleccionado)= {'Vacio'}
     set(lista,'String',estados);
+
+function [] = cargarTablaHomomorfismo(handles)
+    tabla = handles.tablaMaquina1;
+    filas = get(tabla, 'RowName');
+    columnas = get(tabla, 'ColumnName');
+    tamanioColumnas = size(columnas);
+    tamanioFilas = size(filas);
+    columnas = columnas(1:tamanioColumnas-1);
+    tamanioColumnas = size(columnas);
+    celdas = cell(tamanioFilas(1)*(tamanioColumnas(1)-1), 8);
+    k = 1;
+    for i = 1:tamanioFilas
+        for j = 1:tamanioColumnas
+            celdas(k, 1) = filas(i)
+            celdas(k, 2) = columnas(j)
+            k = k + 1;
+        end
+    end
     
+
      
 % --- Executes on selection change in listbox1.
 function listbox1_Callback(hObject, eventdata, handles)
