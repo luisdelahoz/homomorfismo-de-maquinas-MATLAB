@@ -151,10 +151,61 @@ function [] = cargarTablaHomomorfismo(handles)
             celdas(k, 1) = filas(i)
             celdas(k, 2) = columnas(j)
             celdas(k, 3) = phi(i)
+            celdas(k, 4) = funcionTransferenciaEstado(filas(i), columnas(j), tabla)
+            celdas(k, 5) = funcionPhi(celdas(k, 4), handles)
+            celdas(k, 6) = funcionTransferenciaEstado(phi(i), columnas(j), tabla)
+            celdas(k, 8) = salidaMaquina2(phi(i), handles)
             k = k + 1;
         end
     end
+    set(handles.tablaHomomorfismo, 'Data', celdas);
     
+function [estado] = funcionTransferenciaEstado(estado, entrada, tablaReferencia)
+    estados = get(tablaReferencia, 'RowName');
+    entradas = get(tablaReferencia, 'ColumnName');
+    
+    for i = 1:size(estados)
+        if(strcmp(estados(i), estado))
+            indiceEstado = i;
+            break;
+        end
+    end
+    
+    for j = 1:size(entradas)
+        if(strcmp(entradas(j), entrada))
+            indiceEntrada = j;
+            break;
+        end
+    end
+    
+    datos = get(tablaReferencia, 'Data');
+    estado = datos(indiceEstado, indiceEntrada);
+
+function [estado] = funcionPhi(estado, handles)
+    phi = [get(handles.listaEstadosMaquina1Seleccionados, 'String'), get(handles.listaEstadosMaquina2Seleccionados, 'String')];
+    
+    [filas, columnas] = size(phi)
+    for i = 1:filas
+        if(strcmp(phi(i, 1), estado))
+            estado = phi(i, 2);
+            return;
+        end
+    end
+    
+ function [salida] = salidaMaquina2(estado, handles)
+    tabla = handles.tablaMaquina2;
+    estados = get(tabla, 'RowName');
+    entradas = get(tabla, 'ColumnName');
+    datos = get(tabla, 'Data');
+    [filas, tamanioColumnas] = size(entradas);
+    tamanioFilas = size(filas);
+    for i = 1:tamanioFilas
+        if strcmp(estado, estados(i))
+            break;
+        end
+    end
+    
+    salida = datos(i, filas)
 
      
 % --- Executes on selection change in listbox1.
