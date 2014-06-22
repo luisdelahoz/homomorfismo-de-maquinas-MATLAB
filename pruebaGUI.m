@@ -75,7 +75,7 @@ varargout{1} = handles.output;
 % --- Executes on button press in botonCargarDatosMaquina1.
 function botonCargarDatosMaquina1_Callback(hObject, eventdata, handles)
     cargarDatosTabla(handles.listaEstadosMaquina1Seleccionados, handles.tablaMaquina1);
-    cargarTablaHomomorfismo(handles);
+
 % hObject    handle to botonCargarDatosMaquina1 (see GCBO)
 % eventdata  reserved - to be defined in a http://www.marca.com/future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -137,6 +137,7 @@ function [] =  quitarElementoLista(lista)
 
 function [] = cargarTablaHomomorfismo(handles)
     tabla = handles.tablaMaquina1;
+    phi = get(handles.listaEstadosMaquina2Seleccionados, 'String');
     filas = get(tabla, 'RowName');
     columnas = get(tabla, 'ColumnName');
     tamanioColumnas = size(columnas);
@@ -149,6 +150,7 @@ function [] = cargarTablaHomomorfismo(handles)
         for j = 1:tamanioColumnas
             celdas(k, 1) = filas(i)
             celdas(k, 2) = columnas(j)
+            celdas(k, 3) = phi(i)
             k = k + 1;
         end
     end
@@ -330,6 +332,7 @@ end
 
 % --- Executes on button press in botonVerificarPropiedades.
 function botonVerificarPropiedades_Callback(hObject, eventdata, handles)
+    cargarTablaHomomorfismo(handles);
 % hObject    handle to botonVerificarPropiedades (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
