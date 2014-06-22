@@ -140,8 +140,10 @@ function [] = cargarTablaHomomorfismo(handles)
     phi = get(handles.listaEstadosMaquina2Seleccionados, 'String');
     filas = get(tabla, 'RowName');
     columnas = get(tabla, 'ColumnName');
+    datos = get(tabla, 'Data');
     tamanioColumnas = size(columnas);
     tamanioFilas = size(filas);
+    salidas = datos(:,tamanioColumnas);
     columnas = columnas(1:tamanioColumnas-1);
     tamanioColumnas = size(columnas);
     celdas = cell(tamanioFilas(1)*(tamanioColumnas(1)-1), 8);
@@ -151,11 +153,29 @@ function [] = cargarTablaHomomorfismo(handles)
             celdas(k, 1) = filas(i)
             celdas(k, 2) = columnas(j)
             celdas(k, 3) = phi(i)
+            celdas(k, 7) = salidas(i)
+            celdas(k, 8) = salidaMaquina2(phi(i),handles)
             k = k + 1;
         end
     end
     
-
+    
+    function [salida] = salidaMaquina2(estado, handles)
+        tabla = handles.tablaMaquina2;
+        estados = get(tabla, 'RowName');
+        entradas = get(tabla, 'ColumnName');
+        datos = get(tabla, 'Data');
+        [filas, tamanioColumnas] = size(entradas);
+        tamanioFilas = size(estados);
+      for i = 1:tamanioFilas
+        if strcmp(estado, estados(i))
+            break;
+        end
+      end
+           salida=datos(i,filas)
+           
+            
+        
      
 % --- Executes on selection change in listbox1.
 function listbox1_Callback(hObject, eventdata, handles)
