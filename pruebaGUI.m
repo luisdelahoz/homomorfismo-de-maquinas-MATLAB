@@ -22,7 +22,7 @@ function varargout = pruebaGUI(varargin)
 
 % Edit the above text to modify the response to help pruebaGUI
 
-% Last Modified by GUIDE v2.5 21-Jun-2014 15:15:57
+% Last Modified by GUIDE v2.5 21-Jun-2014 17:16:46
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -74,23 +74,36 @@ varargout{1} = handles.output;
 
 % --- Executes on button press in botonCargarDatosMaquina1.
 function botonCargarDatosMaquina1_Callback(hObject, eventdata, handles)
-    cargarDatosTabla(handles.listaEstadosMaquina1, handles.tablaMaquina1);
+    cargarDatosTabla(handles.listaEstadosMaquina1Seleccionados, handles.tablaMaquina1);
 % hObject    handle to botonCargarDatosMaquina1 (see GCBO)
 % eventdata  reserved - to be defined in a http://www.marca.com/future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % --- Executes on button press in botonCargarDatosMaquina2.
 function botonCargarDatosMaquina2_Callback(hObject, eventdata, handles)
-    cargarDatosTabla(handles.listaEstadosMaquina2, handles.tablaMaquina2);            
+    cargarDatosTabla(handles.listaEstadosMaquina2, handles.tablaMaquina2);
+    lista = get(handles.listaEstadosMaquina1Seleccionados, 'String');
+    [filas, columnas] = size(lista)
+    vector= cell(1, filas);
+    vector(1:filas) = {'Vacio'};
+    set(handles.listaEstadosMaquina2Seleccionados, 'String', vector);
 % hObject    handle to botonCargarDatosMaquina2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 function [] = agregarElementoLista(listaA, listaB)
-    estados = get(listaA, 'String')
-    valorSeleccionado = get(listaA, 'Value')
-    set(listaB, 'String', [get(listaB, 'String'); estados(valorSeleccionado)]);
-
+  estadosA = get(listaA, 'String')
+  valorSeleccionado = get(listaA, 'Value')
+  estadosB = get(listaB, 'String')
+  tamanio = size(estadosB)
+  for i = 1:tamanio
+      if strcmp(estadosB(i), 'Vacio')
+          estadosB(i) = estadosA(valorSeleccionado);
+          set(listaB, 'String', estadosB);
+          return
+      end
+  end
+  %set(listaB, 'String', [get(listaB, 'String'); estados(valorSeleccionado)]);
 
 function [] = borrarDatos(tabla)
     set(tabla, 'Data', cell(4, 2));
@@ -116,16 +129,11 @@ function cargarDatosTabla(lista, tabla)
     end
     
 function [] =  quitarElementoLista(lista)
-     listaString = get(lista, 'String');
-     tamanio = size(listaString);
-     valorSeleccionado = get(lista, 'Value');
-     
-     for i = 1:tamanio
-         if(i ~= valorSeleccionado)
-             listaNueva = [listaNueva, listaString(i)]
-     
-         end
-     end
+    estados = get(lista,'String')
+    valorSeleccionado = get(lista, 'Value')
+    estados(valorSeleccionado)= {'Vacio'}
+    set(lista,'String',estados);
+    
      
 % --- Executes on selection change in listbox1.
 function listbox1_Callback(hObject, eventdata, handles)
@@ -238,16 +246,18 @@ function quitarEstadoE_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in pushbutton8.
-function pushbutton8_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton8 (see GCBO)
+% --- Executes on button press in botonQuitarElemento.
+function botonQuitarElemento_Callback(hObject, eventdata, handles)
+    quitarElementoLista(handles.listaEstadosMaquina2Seleccionados);
+% hObject    handle to botonQuitarElemento (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in pushbutton9.
-function pushbutton9_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton9 (see GCBO)
+% --- Executes on button press in botonAgregarElemento.
+function botonAgregarElemento_Callback(hObject, eventdata, handles)
+    agregarElementoLista(handles.listaEstadosMaquina2, handles.listaEstadosMaquina2Seleccionados);
+% hObject    handle to botonAgregarElemento (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
