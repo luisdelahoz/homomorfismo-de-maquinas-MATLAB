@@ -22,7 +22,7 @@ function varargout = pruebaGUI(varargin)
 
 % Edit the above text to modify the response to help pruebaGUI
 
-% Last Modified by GUIDE v2.5 27-Jun-2014 01:42:14
+% Last Modified by GUIDE v2.5 27-Jun-2014 10:20:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -194,7 +194,7 @@ function [estado] = funcionTransferenciaEstado(estado, entrada, tablaReferencia)
             break;
         end
     end
-    
+   
     for j = 1:size(entradas)
         if(strcmp(entradas(j), entrada))
             indiceEntrada = j;
@@ -206,9 +206,9 @@ function [estado] = funcionTransferenciaEstado(estado, entrada, tablaReferencia)
     estado = datos(indiceEstado, indiceEntrada);
     
 function [estado] = funcionPhi(estado, handles)
-    phi = [get(handles.listaEstadosMaquina1Seleccionados, 'String'), get(handles.listaEstadosMaquina2Seleccionados, 'String')];
+    phi = [get(handles.listaEstadosMaquina1Seleccionados, 'String'), get(handles.listaEstadosMaquina2Seleccionados, 'String')]
     
-    [filas, columnas] = size(phi)
+    [filas, columnas] = size(phi);
     for i = 1:filas
         if(strcmp(phi(i, 1), estado))
             estado = phi(i, 2);
@@ -242,19 +242,11 @@ function [salida] = funcionSalida(estado, maquinaTabla)
     end
     salida = datos(i,filas);
     
-function verificarHomomorfismo(tabla, handles)
-    if(sonIgualesTransicionEstados(tabla) == 1)
-        if(sonIgualesSalidas(tabla) == 1)
-            set(handles.etiquetaHomomorfismo, 'BackgroundColor', 'Green');
-            set(handles.etiquetaHomomorfismo, 'String', 'SI');
-        end
-    end
- 
 function [sonIguales] = sonIgualesTransicionEstados(tabla)
     datos = get(tabla, 'Data');
     [numeroFilas, numeroColumnas] = size(datos);
     for i = 1:numeroFilas
-        if(strcmp(datos(i, 5), datos(i, 6)) == 0)
+        if(cell2mat(datos(i, 5)) ~= cell2mat(datos(i, 6)))
             sonIguales = 0;
             return;
         end
@@ -266,14 +258,63 @@ function [sonIguales] = sonIgualesSalidas(tabla)
     datos = get(tabla, 'Data');
     [numeroFilas, numeroColumnas] = size(datos);
     for i = 1:numeroFilas
-        if(strcmp(datos(i, 7), datos(i, 8)) == 0)
+        if(cell2mat(datos(i, 7)) ~= cell2mat(datos(i, 8)))
             sonIguales = 0;
             return;
         end
     end
     sonIguales = 1;
     disp(sonIguales);
-                   
+
+function [esHomomorfismo] = verificarHomomorfismo(tabla, handles)
+    if(sonIgualesTransicionEstados(tabla) == 1)
+        if(sonIgualesSalidas(tabla) == 1)
+            esHomomorfismo = 1;
+            return;
+        end
+    end
+    esHomomorfismo = 0;
+    
+function [esMonomorfismo] = verificarMonomorfismo(listaEstadosE, handles)
+    [numeroFilas, numeroColumnas] = size(listaEstadosE);
+    
+    for i = 1:numeroFilas-1
+        for j = i+1:numeroFilas
+            if(strcmp(funcionPhi(listaEstadosE(i), handles), funcionPhi(listaEstadosE(j), handles)))
+                esMonomorfismo = 0
+                return;
+            end
+        end
+    end
+    esMonomorfismo = 1;
+    
+function [esEpimorfismo] = verificarEpimorfismo(listaEstadosESeleccionados, listaEstadosE)
+
+    [numeroEstadosESeleccionados, numeroColumnas] = size(listaEstadosESeleccionados);
+    [numeroEstadosE, numeroColumnas] = size(listaEstadosESeleccionados);
+    esta = 0;
+    
+    disp('lista1')
+    numeroEstadosE
+    numeroEstadosESeleccionados
+    
+    for i = 1:numeroEstadosE
+        esta = 0;
+        for j = 1:numeroEstadosESeleccionados
+            if(strcmp(listaEstadosE(i), listaEstadosESeleccionados(j)))
+                esta = 1;
+            end
+        end
+        
+        if(esta == 0)
+            esEpimorfismo = 0;
+            return;
+            
+        end
+    end
+    
+    esEpimorfismo = 1;
+    
 % --- Executes on selection change in listbox1.
 function listbox1_Callback(hObject, eventdata, handles)
 % hObject    handle to listbox1 (see GCBO)
@@ -450,7 +491,39 @@ end
 % --- Executes on button press in botonVerificarPropiedades.
 function botonVerificarPropiedades_Callback(hObject, eventdata, handles)
     cargarTablaHomomorfismo(handles);
-    verificarHomomorfismo(handles.tablaHomomorfismo, handles);
+    if(verificarHomomorfismo(handles.tablaHomomorfismo, handles))
+        set(handles.etiquetaHomomorfismo, 'BackgroundColor', 'Green');
+        set(handles.etiquetaHomomorfismo, 'String', 'SI');
+        if(verificarMonomorfismo(get(handles.listaEstadosMaquina1Seleccionados, 'String'), handles))
+            set(handles.etiquetaMonomorfismo, 'BackgroundColor', 'Green');
+            set(handles.etiquetaMonomorfismo, 'String', 'SI');
+            disp('asdada')
+        else 
+            set(handles.etiquetaMonomorfismo, 'BackgroundColor', 'Red');
+            set(handles.etiquetaMonomorfismo, 'String', 'NO');    
+        end
+        
+        if(verificarEpimorfismo(get(handles.listaEstadosMaquina2Seleccionados, 'String'), get(handles.listaEstadosMaquina2, 'String')))
+            set(handles.etiquetaEpimorfismo, 'BackgroundColor', 'Green');
+            set(handles.etiquetaEpimorfismo, 'String', 'SI');
+        else 
+            set(handles.etiquetaEpimorfismo, 'BackgroundColor', 'Red');
+            set(handles.etiquetaEpimorfismo, 'String', 'NO');    
+        end
+        
+        if(strcmp(get(handles.etiquetaMonomorfismo, 'String'), 'SI') && strcmp(get(handles.etiquetaEpimorfismo, 'String'), 'SI'))
+            set(handles.etiquetaIsomorfismo, 'BackgroundColor', 'Green');
+            set(handles.etiquetaIsomorfismo, 'String', 'SI');
+        else
+            set(handles.etiquetaIsomorfismo, 'BackgroundColor', 'Red');
+            set(handles.etiquetaIsomorfismo, 'String', 'NO');
+        end
+        
+    else
+       set(handles.etiquetaHomomorfismo, 'BackgroundColor', 'Red');
+       set(handles.etiquetaHomomorfismo, 'String', 'NO'); 
+    end
+        
 % hObject    handle to botonVerificarPropiedades (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
