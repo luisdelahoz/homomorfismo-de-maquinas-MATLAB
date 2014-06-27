@@ -22,7 +22,7 @@ function varargout = pruebaGUI(varargin)
 
 % Edit the above text to modify the response to help pruebaGUI
 
-% Last Modified by GUIDE v2.5 21-Jun-2014 17:16:46
+% Last Modified by GUIDE v2.5 27-Jun-2014 01:42:14
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -97,14 +97,20 @@ function [] = agregarElementoLista(listaA, listaB)
   valorSeleccionado = get(listaA, 'Value');
   estadosB = get(listaB, 'String');
   tamanio = size(estadosB);
+  hayVacio = 0;
+  
   for i = 1:tamanio
       if strcmp(estadosB(i), 'Vacio')
+          hayVacio = 1; 
           estadosB(i) = estadosA(valorSeleccionado);
           set(listaB, 'String', estadosB);
           return
       end
   end
-  %set(listaB, 'String', [get(listaB, 'String'); estados(valorSeleccionado)]);
+  
+  if(hayVacio == 0)
+      msgbox('No hay casillas vacias. Primero elimine un elemento de la lista');
+  end
 
 function [] = borrarDatos(tabla)
     set(tabla, 'Data', cell(4, 2));
@@ -128,58 +134,56 @@ function cargarDatosTabla(lista, tabla)
         set(tabla, 'ColumnWidth', {50});
         set(lista, 'String', nuevaTabla(2:filas, 1));
     end
-    
-function [] =  quitarElementoLista(lista)
-    estados = get(lista,'String')
-    valorSeleccionado = get(lista, 'Value')
-    estados(valorSeleccionado)= {'Vacio'}
-    set(lista,'String',estados);
 
+function [filaInicial, columnaInicial] = determinarIndicesNuevaTabla(tabla, filas, columnas)
+    for i = 1:filas
+        for j = 1:columnas
+            if((strcmp(tabla(i,j), 'E') || strcmp(tabla(i,j), 'Estado')))
+                filaInicial = i;
+                columnaInicial = j;
+                return;
+            end
+        end
+    end
+    
+function [nuevaTabla] = determinarNuevaTabla(numeroTexto)
+    [filas, columnas] = size(numeroTexto);
+    [filaInicial, columnaInicial] = determinarIndicesNuevaTabla(numeroTexto, filas, columnas);
+    nuevaTabla = numeroTexto(filaInicial:filas, columnaInicial:columnas);
+    
 function [] = cargarTablaHomomorfismo(handles)
+    
     tabla = handles.tablaMaquina1;
     phi = get(handles.listaEstadosMaquina2Seleccionados, 'String');
-    filas = get(tabla, 'RowName');
-    columnas = get(tabla, 'ColumnName');
+    
+    estados = get(tabla, 'RowName');
+    entradas = get(tabla, 'ColumnName');
     datos = get(tabla, 'Data');
-    tamanioColumnas = size(columnas);
-    tamanioFilas = size(filas);
-    salidas = datos(:,tamanioColumnas);
-    columnas = columnas(1:tamanioColumnas-1);
-    tamanioColumnas = size(columnas);
-    celdas = cell(tamanioFilas(1)*(tamanioColumnas(1)-1), 8);
+    
+    numeroEntradas = size(entradas);
+    numeroEstados = size(estados);
+    
+    salidas = datos(:,numeroEntradas);
+    entradas = entradas(1:numeroEntradas-1);
+    numeroEntradas = size(entradas);
+    celdas = cell(numeroEstados(1)*(numeroEntradas(1)-1), 8);
     k = 1;
-    for i = 1:tamanioFilas
-        for j = 1:tamanioColumnas
-            celdas(k, 1) = filas(i)
-            celdas(k, 2) = columnas(j)
-            celdas(k, 3) = phi(i)
-            celdas(k, 4) = funcionTransferenciaEstado(filas(i), columnas(j), tabla)
-            celdas(k, 5) = funcionPhi(celdas(k, 4), handles)
-            celdas(k, 6) = funcionTransferenciaEstado(phi(i), columnas(j), tabla)
-            celdas(k, 7) = salidas(i)
-            celdas(k, 8) = salidaMaquina2(phi(i), handles)
+    
+    for i = 1:numeroEstados
+        for j = 1:numeroEntradas
+            celdas(k, 1) = estados(i);
+            celdas(k, 2) = entradas(j);
+            celdas(k, 3) = phi(i);
+            celdas(k, 4) = funcionTransferenciaEstado(estados(i), entradas(j), tabla);
+            celdas(k, 5) = funcionPhi(celdas(k, 4), handles);
+            celdas(k, 6) = funcionTransferenciaEstado(phi(i), entradas(j), tabla);
+            celdas(k, 7) = salidas(i);
+            celdas(k, 8) = funcionSalida(phi(i), handles.tablaMaquina2);
             k = k + 1;
         end
     end
     set(handles.tablaHomomorfismo, 'Data', celdas);
     
-    
-    function [salida] = salidaMaquina2(estado, handles)
-        tabla = handles.tablaMaquina2;
-        estados = get(tabla, 'RowName');
-        entradas = get(tabla, 'ColumnName');
-        datos = get(tabla, 'Data');
-        [filas, tamanioColumnas] = size(entradas);
-        tamanioFilas = size(estados);
-      for i = 1:tamanioFilas
-        if strcmp(estado, estados(i))
-            break;
-        end
-      end
-           salida=datos(i,filas)
-           
-            
-        
 function [estado] = funcionTransferenciaEstado(estado, entrada, tablaReferencia)
     estados = get(tablaReferencia, 'RowName');
     entradas = get(tablaReferencia, 'ColumnName');
@@ -200,7 +204,7 @@ function [estado] = funcionTransferenciaEstado(estado, entrada, tablaReferencia)
     
     datos = get(tablaReferencia, 'Data');
     estado = datos(indiceEstado, indiceEntrada);
-
+    
 function [estado] = funcionPhi(estado, handles)
     phi = [get(handles.listaEstadosMaquina1Seleccionados, 'String'), get(handles.listaEstadosMaquina2Seleccionados, 'String')];
     
@@ -212,21 +216,64 @@ function [estado] = funcionPhi(estado, handles)
         end
     end
     
- function [salida] = salidaMaquina2(estado, handles)
-    tabla = handles.tablaMaquina2;
-    estados = get(tabla, 'RowName');
-    entradas = get(tabla, 'ColumnName');
-    datos = get(tabla, 'Data');
+function [] =  quitarElementoLista(lista)
+    estados = get(lista,'String')
+    valorSeleccionado = get(lista, 'Value')
+    if(strcmp(estados(valorSeleccionado), 'Vacio'))
+        msgbox('Valor seleccionado ya vacio');
+    else
+        estados(valorSeleccionado) = {'Vacio'}
+        set(lista,'String', estados);
+    end
+
+  
+function [salida] = funcionSalida(estado, maquinaTabla)
+    estados = get(maquinaTabla, 'RowName');
+    entradas = get(maquinaTabla, 'ColumnName');
+    datos = get(maquinaTabla, 'Data');
+        
     [filas, tamanioColumnas] = size(entradas);
-    tamanioFilas = size(filas);
+    tamanioFilas = size(estados);
+    
     for i = 1:tamanioFilas
         if strcmp(estado, estados(i))
             break;
         end
     end
+    salida = datos(i,filas);
     
-    salida = datos(i, filas)
-     
+function verificarHomomorfismo(tabla, handles)
+    if(sonIgualesTransicionEstados(tabla) == 1)
+        if(sonIgualesSalidas(tabla) == 1)
+            set(handles.etiquetaHomomorfismo, 'BackgroundColor', 'Green');
+            set(handles.etiquetaHomomorfismo, 'String', 'SI');
+        end
+    end
+ 
+function [sonIguales] = sonIgualesTransicionEstados(tabla)
+    datos = get(tabla, 'Data');
+    [numeroFilas, numeroColumnas] = size(datos);
+    for i = 1:numeroFilas
+        if(strcmp(datos(i, 5), datos(i, 6)) == 0)
+            sonIguales = 0;
+            return;
+        end
+    end
+    sonIguales = 1;
+    disp(sonIguales);
+    
+function [sonIguales] = sonIgualesSalidas(tabla)
+    datos = get(tabla, 'Data');
+    [numeroFilas, numeroColumnas] = size(datos);
+    for i = 1:numeroFilas
+        if(strcmp(datos(i, 7), datos(i, 8)) == 0)
+            sonIguales = 0;
+            return;
+        end
+    end
+    sonIguales = 1;
+    disp(sonIguales);
+                   
 % --- Executes on selection change in listbox1.
 function listbox1_Callback(hObject, eventdata, handles)
 % hObject    handle to listbox1 (see GCBO)
@@ -403,24 +450,7 @@ end
 % --- Executes on button press in botonVerificarPropiedades.
 function botonVerificarPropiedades_Callback(hObject, eventdata, handles)
     cargarTablaHomomorfismo(handles);
+    verificarHomomorfismo(handles.tablaHomomorfismo, handles);
 % hObject    handle to botonVerificarPropiedades (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-function [filaInicial, columnaInicial] = determinarIndicesNuevaTabla(tabla, filas, columnas)
-    for i = 1:filas
-        for j = 1:columnas
-            if(strcmp(tabla(i,j), 'E'))
-                filaInicial = i;
-                columnaInicial = j;
-                return;
-            end
-        end
-    end
-    
-function [nuevaTabla] = determinarNuevaTabla(numeroTexto)
-    [filas, columnas] = size(numeroTexto);
-    [filaInicial, columnaInicial] = determinarIndicesNuevaTabla(numeroTexto, filas, columnas);
-    nuevaTabla = numeroTexto(filaInicial:filas, columnaInicial:columnas);
-    
-   
