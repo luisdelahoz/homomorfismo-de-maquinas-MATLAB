@@ -153,12 +153,13 @@ function [nuevaTabla] = determinarNuevaTabla(numeroTexto)
     
 function [] = cargarTablaHomomorfismo(handles)
     
-    tabla = handles.tablaMaquina1;
+    tablaMaquina1 = handles.tablaMaquina1;
+    tablaMaquina2 = handles.tablaMaquina2;
     phi = get(handles.listaEstadosMaquina2Seleccionados, 'String');
     
-    estados = get(tabla, 'RowName');
-    entradas = get(tabla, 'ColumnName');
-    datos = get(tabla, 'Data');
+    estados = get(tablaMaquina1, 'RowName');
+    entradas = get(tablaMaquina1, 'ColumnName');
+    datos = get(tablaMaquina1, 'Data');
     
     numeroEntradas = size(entradas);
     numeroEstados = size(estados);
@@ -174,11 +175,11 @@ function [] = cargarTablaHomomorfismo(handles)
             celdas(k, 1) = estados(i);
             celdas(k, 2) = entradas(j);
             celdas(k, 3) = phi(i);
-            celdas(k, 4) = funcionTransferenciaEstado(estados(i), entradas(j), tabla);
+            celdas(k, 4) = funcionTransferenciaEstado(estados(i), entradas(j), tablaMaquina1);
             celdas(k, 5) = funcionPhi(celdas(k, 4), handles);
-            celdas(k, 6) = funcionTransferenciaEstado(phi(i), entradas(j), tabla);
+            celdas(k, 6) = funcionTransferenciaEstado(phi(i), entradas(j), tablaMaquina2);
             celdas(k, 7) = salidas(i);
-            celdas(k, 8) = funcionSalida(phi(i), handles.tablaMaquina2);
+            celdas(k, 8) = funcionSalida(phi(i), tablaMaquina2);
             k = k + 1;
         end
     end
@@ -206,7 +207,7 @@ function [estado] = funcionTransferenciaEstado(estado, entrada, tablaReferencia)
     estado = datos(indiceEstado, indiceEntrada);
     
 function [estado] = funcionPhi(estado, handles)
-    phi = [get(handles.listaEstadosMaquina1Seleccionados, 'String'), get(handles.listaEstadosMaquina2Seleccionados, 'String')]
+    phi = [get(handles.listaEstadosMaquina1Seleccionados, 'String'), get(handles.listaEstadosMaquina2Seleccionados, 'String')];
     
     [filas, columnas] = size(phi);
     for i = 1:filas
@@ -281,7 +282,7 @@ function [esMonomorfismo] = verificarMonomorfismo(listaEstadosE, handles)
     for i = 1:numeroFilas-1
         for j = i+1:numeroFilas
             if(strcmp(funcionPhi(listaEstadosE(i), handles), funcionPhi(listaEstadosE(j), handles)))
-                esMonomorfismo = 0
+                esMonomorfismo = 0;
                 return;
             end
         end
@@ -291,12 +292,8 @@ function [esMonomorfismo] = verificarMonomorfismo(listaEstadosE, handles)
 function [esEpimorfismo] = verificarEpimorfismo(listaEstadosESeleccionados, listaEstadosE)
 
     [numeroEstadosESeleccionados, numeroColumnas] = size(listaEstadosESeleccionados);
-    [numeroEstadosE, numeroColumnas] = size(listaEstadosESeleccionados);
+    [numeroEstadosE, numeroColumnas] = size(listaEstadosE);
     esta = 0;
-    
-    disp('lista1')
-    numeroEstadosE
-    numeroEstadosESeleccionados
     
     for i = 1:numeroEstadosE
         esta = 0;
@@ -522,6 +519,12 @@ function botonVerificarPropiedades_Callback(hObject, eventdata, handles)
     else
        set(handles.etiquetaHomomorfismo, 'BackgroundColor', 'Red');
        set(handles.etiquetaHomomorfismo, 'String', 'NO'); 
+       set(handles.etiquetaMonomorfismo, 'BackgroundColor', 'Red');
+       set(handles.etiquetaMonomorfismo, 'String', 'NO'); 
+       set(handles.etiquetaEpimorfismo, 'BackgroundColor', 'Red');
+       set(handles.etiquetaEpimorfismo, 'String', 'NO');
+       set(handles.etiquetaIsomorfismo, 'BackgroundColor', 'Red');
+       set(handles.etiquetaIsomorfismo, 'String', 'NO'); 
     end
         
 % hObject    handle to botonVerificarPropiedades (see GCBO)
