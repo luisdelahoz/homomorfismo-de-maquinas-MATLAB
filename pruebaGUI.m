@@ -74,7 +74,18 @@ varargout{1} = handles.output;
 
 % --- Executes on button press in botonCargarDatosMaquina1.
 function botonCargarDatosMaquina1_Callback(hObject, eventdata, handles)
-    cargarDatosTabla(handles.listaEstadosMaquina1Seleccionados, handles.tablaMaquina1);
+    estaCargada=cargarDatosTabla(handles.listaEstadosMaquina1Seleccionados, handles.tablaMaquina1);
+    if estaCargada ==1
+        set(handles.botonCargarDatosMaquina1,'Enable','off');
+        set(handles.botonBorrarDatosMaquina1,'Enable','on');
+    end
+    botonMaquina1=get(handles.botonCargarDatosMaquina1,'Enable');
+    botonMaquina2=get(handles.botonCargarDatosMaquina2,'Enable');
+    if(strcmp(botonMaquina1,'off')&&(strcmp(botonMaquina2,'off')))
+        set(handles.botonVerificarDatos,'Enable','on');
+    else
+        set(handles.botonVerificarDatos,'Enable','off');
+    end 
 
 % hObject    handle to botonCargarDatosMaquina1 (see GCBO)
 % eventdata  reserved - to be defined in a http://www.marca.com/future version of MATLAB
@@ -82,12 +93,19 @@ function botonCargarDatosMaquina1_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in botonCargarDatosMaquina2.
 function botonCargarDatosMaquina2_Callback(hObject, eventdata, handles)
-    cargarDatosTabla(handles.listaEstadosMaquina2, handles.tablaMaquina2);
-    lista = get(handles.listaEstadosMaquina1Seleccionados, 'String');
-    [filas, columnas] = size(lista)
-    vector= cell(1, filas);
-    vector(1:filas) = {'Vacio'};
-    set(handles.listaEstadosMaquina2Seleccionados, 'String', vector);
+    estaCargada=cargarDatosTabla(handles.listaEstadosMaquina2, handles.tablaMaquina2);
+    if estaCargada ==1
+        set(handles.botonCargarDatosMaquina2,'Enable','off');
+        set(handles.botonBorrarDatosMaquina2,'Enable','on');
+        
+    end
+    botonMaquina1=get(handles.botonCargarDatosMaquina1,'Enable');
+    botonMaquina2=get(handles.botonCargarDatosMaquina2,'Enable');
+    if(strcmp(botonMaquina1,'off')&&(strcmp(botonMaquina2,'off')))
+        set(handles.botonVerificarDatos,'Enable','on');
+    else
+        set(handles.botonVerificarDatos,'Enable','off');
+    end
 % hObject    handle to botonCargarDatosMaquina2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -119,38 +137,85 @@ function [] = borrarDatos(tabla)
     set(tabla, 'ColumnWidth', {'auto'});
 
 
-function cargarDatosTabla(lista, tabla)
+function [cargada]= cargarDatosTabla(lista, tabla)
+    cargada=0
     [fileName, path]= uigetfile({'*.xls;*.xlsx'},'Abrir archivos Excel');
     if isequal(fileName, 0) 
         return 
     else 
         ruta = strcat(path, fileName);
         [~, ~, numeroTexto] = xlsread(ruta);
-        [nuevaTabla] = determinarNuevaTabla(numeroTexto); 
-        [filas, columnas] = size(nuevaTabla);
-        set(tabla, 'Data', nuevaTabla(2:filas, 2:columnas));
-        set(tabla, 'RowName', nuevaTabla(2:filas, 1));
-        set(tabla, 'ColumnName', nuevaTabla(1, 2:columnas));
-        set(tabla, 'ColumnWidth', {50});
-        set(lista, 'String', nuevaTabla(2:filas, 1));
+        [nuevaTabla,espacioVacio] = determinarNuevaTabla(numeroTexto); 
+        if espacioVacio==1
+            msgbox('Verifique que la tabla no tenga Espacios en Blanco','Alerta','warn');
+        else
+            [filas, columnas] = size(nuevaTabla);
+            set(tabla, 'Data', nuevaTabla(2:filas, 2:columnas));
+            set(tabla, 'RowName', nuevaTabla(2:filas, 1));
+            set(tabla, 'ColumnName', nuevaTabla(1, 2:columnas));
+            set(tabla, 'ColumnWidth', {50});
+            %set(lista, 'String', nuevaTabla(2:filas, 1));
+            cargada=1;
+        end
+        
     end
 
-function [filaInicial, columnaInicial] = determinarIndicesNuevaTabla(tabla, filas, columnas)
+function [filaInicial, columnaInicial,tieneFormato] = determinarIndicesNuevaTabla(tabla, filas, columnas)
+    tieneFormato=0;
     for i = 1:filas
         for j = 1:columnas
-            if((strcmp(tabla(i,j), 'E') || strcmp(tabla(i,j), 'Estado')))
+            if (~(isnan(cell2mat(tabla(i,j)))))
+            if((strcmp(upper(tabla(i,j)), 'E') || strcmp(upper(tabla(i,j)), 'ESTADO')))
                 filaInicial = i;
                 columnaInicial = j;
+                tieneFormato=1;
                 return;
+            end
             end
         end
     end
     
-function [nuevaTabla] = determinarNuevaTabla(numeroTexto)
+function [nuevaTabla, espacioVacio] = determinarNuevaTabla(numeroTexto)
+    espacioVacio=0;
     [filas, columnas] = size(numeroTexto);
-    [filaInicial, columnaInicial] = determinarIndicesNuevaTabla(numeroTexto, filas, columnas);
-    nuevaTabla = numeroTexto(filaInicial:filas, columnaInicial:columnas);
+    [filaInicial, columnaInicial,tieneFormato] = determinarIndicesNuevaTabla(numeroTexto, filas, columnas);
+    if (tieneFormato ==1)
+        for i = filaInicial:filas
+            for j = columnaInicial:columnas
+                if(isnan(cell2mat((numeroTexto(i,j)))))
+                    espacioVacio=1;
+                    return
+                end
+            end
+        end
+        nuevaTabla = numeroTexto(filaInicial:filas, columnaInicial:columnas);
+    else
+        msgbox('Formato de Tabla Incorrecto!','Alerta','warn');
+    end
     
+    function [esFinita] = verificarMaquinaFinita(tabla)
+        datos = get(tabla,'Data');
+        estados = get(tabla,'RowName');
+        [filas,columnas] = size(datos);
+        numeroEstados=size(estados);
+            
+        for i=1:filas
+            for j=1:columnas-1
+                encontrada=0;
+                for k=1:numeroEstados
+                    if(strcmp(datos(i,j),estados(k)))
+                        encontrada=1;
+                        break;
+                    end
+                end
+                if(encontrada==0)
+                    esFinita=0;
+                    return;
+                end  
+            end
+        end
+        esFinita=1;
+         
 function [] = cargarTablaHomomorfismo(handles)
     
     tablaMaquina1 = handles.tablaMaquina1;
@@ -160,10 +225,8 @@ function [] = cargarTablaHomomorfismo(handles)
     estados = get(tablaMaquina1, 'RowName');
     entradas = get(tablaMaquina1, 'ColumnName');
     datos = get(tablaMaquina1, 'Data');
-    
     numeroEntradas = size(entradas);
     numeroEstados = size(estados);
-    
     salidas = datos(:,numeroEntradas);
     entradas = entradas(1:numeroEntradas-1);
     numeroEntradas = size(entradas);
@@ -218,12 +281,12 @@ function [estado] = funcionPhi(estado, handles)
     end
     
 function [] =  quitarElementoLista(lista)
-    estados = get(lista,'String')
-    valorSeleccionado = get(lista, 'Value')
+    estados = get(lista,'String');
+    valorSeleccionado = get(lista, 'Value');
     if(strcmp(estados(valorSeleccionado), 'Vacio'))
         msgbox('Valor seleccionado ya vacio');
     else
-        estados(valorSeleccionado) = {'Vacio'}
+        estados(valorSeleccionado) = {'Vacio'};
         set(lista,'String', estados);
     end
 
@@ -312,6 +375,30 @@ function [esEpimorfismo] = verificarEpimorfismo(listaEstadosESeleccionados, list
     
     esEpimorfismo = 1;
     
+function[hayDatos]=verificarTabla(tabla)
+    datosMaquina = get(tabla,'Data');
+    [filas,columnas] = size(datosMaquina);
+    for i=1:filas
+        for j=1:columnas
+            if(isnan(cell2mat((datosMaquina(i,j)))))
+                hayDatos=0;
+                return
+            end
+        end
+    end
+    hayDatos=1;
+    
+function [llena] = verificarListaLlena(lista)
+    datos = get(lista, 'String');
+    numeroLista=size(datos);
+    for i=1:numeroLista
+        if(strcmp(datos(i),'Vacio'))
+            llena=0;
+            return;
+        end
+    end    
+    llena=1;
+    
 % --- Executes on selection change in listbox1.
 function listbox1_Callback(hObject, eventdata, handles)
 % hObject    handle to listbox1 (see GCBO)
@@ -334,29 +421,83 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 % --- Executes on button press in botonBorrarDatosMaquina1.
 function botonBorrarDatosMaquina1_Callback(hObject, eventdata, handles)
     borrarDatos(handles.tablaMaquina1);
+    set(handles.botonCargarDatosMaquina1,'Enable','on');
+    set(handles.botonBorrarDatosMaquina1,'Enable','off');
+    
+    botonMaquina1=get(handles.botonCargarDatosMaquina1,'Enable');
+    botonMaquina2=get(handles.botonCargarDatosMaquina2,'Enable');
+    if(strcmp(botonMaquina1,'off')&&(strcmp(botonMaquina2,'off')))
+        set(handles.botonVerificarDatos,'Enable','on');
+    else
+        set(handles.botonVerificarDatos,'Enable','off');
+    end
 % hObject    handle to botonBorrarDatosMaquina1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 % --- Executes on button press in botonBorrarDatosMaquina2.
 function botonBorrarDatosMaquina2_Callback(hObject, eventdata, handles)
     borrarDatos(handles.tablaMaquina2);
+    set(handles.botonCargarDatosMaquina2,'Enable','on');
+    set(handles.botonBorrarDatosMaquina2,'Enable','off');
+    
+    botonMaquina1=get(handles.botonCargarDatosMaquina1,'Enable');
+    botonMaquina2=get(handles.botonCargarDatosMaquina2,'Enable');
+    if(strcmp(botonMaquina1,'off')&&(strcmp(botonMaquina2,'off')))
+        set(handles.botonVerificarDatos,'Enable','on');
+    else
+        set(handles.botonVerificarDatos,'Enable','off');
+    end
 % hObject    handle to botonBorrarDatosMaquina2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 % --- Executes on button press in botonVerificarDatos.
 function botonVerificarDatos_Callback(hObject, eventdata, handles)
+    
+    %datosMaquina2=get(handles.tabla,'Data')
+    hayDatos = verificarTabla(handles.tablaMaquina1);
+    if hayDatos == 1
+       hayDatos = verificarTabla(handles.tablaMaquina2);
+       if hayDatos == 1
+           esFinita = verificarMaquinaFinita(handles.tablaMaquina1);
+           if esFinita == 1
+               esFinita = verificarMaquinaFinita(handles.tablaMaquina2);
+               if esFinita == 1
+                   set(handles.listaEstadosMaquina1Seleccionados, 'String', get(handles.tablaMaquina1, 'RowName'));
+                    set(handles.listaEstadosMaquina2, 'String', get(handles.tablaMaquina2, 'RowName'));
+                   lista = get(handles.listaEstadosMaquina1Seleccionados, 'String');
+                   [filas, columnas] = size(lista);
+                   vector= cell(1, filas);
+                   vector(1:filas) = {'Vacio'};
+                   set(handles.listaEstadosMaquina2Seleccionados, 'String', vector);
+                   set(handles.listaEstadosMaquina1Seleccionados,'Enable','on');
+                   set(handles.listaEstadosMaquina2,'Enable','on');
+                   set(handles.listaEstadosMaquina2Seleccionados,'Enable','on');
+                   set(handles.botonQuitarElemento,'Enable','on');
+                   set(handles.botonAgregarElemento,'Enable','on');
+                   set(handles.botonBorrarDatosMaquina1,'Enable','off');
+                   set(handles.botonBorrarDatosMaquina2,'Enable','off');
+                   set(handles.botonVerificarDatos,'Enable','off');
+               else
+                msgbox('Tabla 2 No Es una Maquina Finita','Alerta','warn');
+               end
+           else
+            msgbox('Tabla 1 No Es una Maquina Finita','Alerta','warn');
+           end
+       else
+        msgbox('Tabla 2 No Cargada','Alerta','warn');
+       end
+    else
+     msgbox('Tabla 1 No Cargada','Alerta','warn');
+    end
+    
 % hObject    handle to botonVerificarDatos (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
 
 % --- Executes on selection change in listaEstadosMaquina1.
 function listaEstadosMaquina1_Callback(hObject, eventdata, handles)
@@ -366,7 +507,6 @@ function listaEstadosMaquina1_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns listaEstadosMaquina1 contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from listaEstadosMaquina1
-
 
 % --- Executes during object creation, after setting all properties.
 function listaEstadosMaquina1_CreateFcn(hObject, eventdata, handles)
@@ -380,7 +520,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 % --- Executes on selection change in listaEstadosMaquina2.
 function listaEstadosMaquina2_Callback(hObject, eventdata, handles)
 % hObject    handle to listaEstadosMaquina2 (see GCBO)
@@ -389,7 +528,6 @@ function listaEstadosMaquina2_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns listaEstadosMaquina2 contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from listaEstadosMaquina2
-
 
 % --- Executes during object creation, after setting all properties.
 function listaEstadosMaquina2_CreateFcn(hObject, eventdata, handles)
@@ -403,10 +541,15 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 % --- Executes on button press in agregarEstadoE.
 function agregarEstadoE_Callback(hObject, eventdata, handles)
     agregarElementoLista(handles.listaEstadosMaquina1, handles.listaEstadosMaquina1Seleccionados);
+    llena=verificarListaLlena(handles.listaEstadosMaquina2Seleccionados);
+    if llena==1
+        set(handles.botonVerificarPropiedades,'Enable','on');
+    else
+        set(handles.botonVerificarPropiedades,'Enable','off');
+    end
     %estadosE = get(handles.listaEstadosMaquina1, 'String')
     %valorSeleccionado = get(handles.listaEstadosMaquina1, 'Value')
     %set(handles.listaEstadosMaquina1Seleccionados, 'String', [get(handles.listaEstadosMaquina1Seleccionados, 'String'); estadosE(valorSeleccionado)]);
@@ -414,30 +557,45 @@ function agregarEstadoE_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 % --- Executes on button press in quitarEstadoE.
 function quitarEstadoE_Callback(hObject, eventdata, handles)
     quitarElementoLista(handles.listaEstadosMaquina1Seleccionados);
+    llena=verificarListaLlena(handles.listaEstadosMaquina2Seleccionados);    
+    if llena==1
+        set(handles.botonVerificarPropiedades,'Enable','on');
+    else
+        set(handles.botonVerificarPropiedades,'Enable','off');
+    end
 % hObject    handle to quitarEstadoE (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 % --- Executes on button press in botonQuitarElemento.
 function botonQuitarElemento_Callback(hObject, eventdata, handles)
     quitarElementoLista(handles.listaEstadosMaquina2Seleccionados);
+    llena=verificarListaLlena(handles.listaEstadosMaquina2Seleccionados);
+    if llena==1
+        set(handles.botonVerificarPropiedades,'Enable','on');
+    else
+        set(handles.botonVerificarPropiedades,'Enable','off');
+    end
 % hObject    handle to botonQuitarElemento (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 % --- Executes on button press in botonAgregarElemento.
 function botonAgregarElemento_Callback(hObject, eventdata, handles)
     agregarElementoLista(handles.listaEstadosMaquina2, handles.listaEstadosMaquina2Seleccionados);
+    llena=verificarListaLlena(handles.listaEstadosMaquina2Seleccionados);
+    if llena==1
+        set(handles.botonVerificarPropiedades,'Enable','on');
+    else
+        set(handles.botonVerificarPropiedades,'Enable','off');
+    end
+
 % hObject    handle to botonAgregarElemento (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
 
 % --- Executes on selection change in listaEstadosMaquina2Seleccionados.
 function listaEstadosMaquina2Seleccionados_Callback(hObject, eventdata, handles)
@@ -447,7 +605,6 @@ function listaEstadosMaquina2Seleccionados_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns listaEstadosMaquina2Seleccionados contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from listaEstadosMaquina2Seleccionados
-
 
 % --- Executes during object creation, after setting all properties.
 function listaEstadosMaquina2Seleccionados_CreateFcn(hObject, eventdata, handles)
@@ -461,7 +618,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 % --- Executes on selection change in listaEstadosMaquina1Seleccionados.
 function listaEstadosMaquina1Seleccionados_Callback(hObject, eventdata, handles)
 % hObject    handle to listaEstadosMaquina1Seleccionados (see GCBO)
@@ -470,7 +626,6 @@ function listaEstadosMaquina1Seleccionados_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns listaEstadosMaquina1Seleccionados contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from listaEstadosMaquina1Seleccionados
-
 
 % --- Executes during object creation, after setting all properties.
 function listaEstadosMaquina1Seleccionados_CreateFcn(hObject, eventdata, handles)
@@ -484,7 +639,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 % --- Executes on button press in botonVerificarPropiedades.
 function botonVerificarPropiedades_Callback(hObject, eventdata, handles)
     cargarTablaHomomorfismo(handles);
@@ -494,7 +648,6 @@ function botonVerificarPropiedades_Callback(hObject, eventdata, handles)
         if(verificarMonomorfismo(get(handles.listaEstadosMaquina1Seleccionados, 'String'), handles))
             set(handles.etiquetaMonomorfismo, 'BackgroundColor', 'Green');
             set(handles.etiquetaMonomorfismo, 'String', 'SI');
-            disp('asdada')
         else 
             set(handles.etiquetaMonomorfismo, 'BackgroundColor', 'Red');
             set(handles.etiquetaMonomorfismo, 'String', 'NO');    
