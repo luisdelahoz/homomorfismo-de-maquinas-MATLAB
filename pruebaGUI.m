@@ -290,18 +290,22 @@ function [estado] = funcionPhi(estado, handles)
     
     [filas, columnas] = size(phi);
     for i = 1:filas
-        if(ischar(estado))
+        if(ischar(cell2mat(estado)))
             if(strcmp(phi(i, 1), estado))
                 estado = phi(i, 2)
                 return;
             end
-        else    
-            if(strcmp(phi(i, 1), mat2str(cell2mat(estado))))
+        else
+            if(strcmp(phi(i, 1), num2str(cell2mat(estado))))
                 estado = phi(i, 2)
                 return;
             end
         end
+        
+            
+             
     end
+    
     
 function [] =  quitarElementoLista(lista)
     estados = get(lista,'String');
