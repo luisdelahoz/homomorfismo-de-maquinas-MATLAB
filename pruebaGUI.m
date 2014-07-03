@@ -74,14 +74,16 @@ varargout{1} = handles.output;
 
 % --- Executes on button press in botonCargarDatosMaquina1.
 function botonCargarDatosMaquina1_Callback(hObject, eventdata, handles)
-    estaCargada=cargarDatosTabla(handles.listaEstadosMaquina1Seleccionados, handles.tablaMaquina1);
-    if estaCargada ==1
+    estaCargada = cargarDatosTabla(handles.tablaMaquina1);
+    if estaCargada == 1
         set(handles.botonCargarDatosMaquina1,'Enable','off');
         set(handles.botonBorrarDatosMaquina1,'Enable','on');
     end
-    botonMaquina1=get(handles.botonCargarDatosMaquina1,'Enable');
-    botonMaquina2=get(handles.botonCargarDatosMaquina2,'Enable');
-    if(strcmp(botonMaquina1,'off')&&(strcmp(botonMaquina2,'off')))
+    
+    botonMaquina1 = get(handles.botonCargarDatosMaquina1,'Enable');
+    botonMaquina2 = get(handles.botonCargarDatosMaquina2,'Enable');
+    
+    if(strcmp(botonMaquina1,'off') && (strcmp(botonMaquina2,'off')))
         set(handles.botonVerificarDatos,'Enable','on');
     else
         set(handles.botonVerificarDatos,'Enable','off');
@@ -93,15 +95,17 @@ function botonCargarDatosMaquina1_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in botonCargarDatosMaquina2.
 function botonCargarDatosMaquina2_Callback(hObject, eventdata, handles)
-    estaCargada=cargarDatosTabla(handles.listaEstadosMaquina2, handles.tablaMaquina2);
-    if estaCargada ==1
+    estaCargada = cargarDatosTabla(handles.tablaMaquina2);
+    if estaCargada == 1
         set(handles.botonCargarDatosMaquina2,'Enable','off');
         set(handles.botonBorrarDatosMaquina2,'Enable','on');
         
     end
-    botonMaquina1=get(handles.botonCargarDatosMaquina1,'Enable');
-    botonMaquina2=get(handles.botonCargarDatosMaquina2,'Enable');
-    if(strcmp(botonMaquina1,'off')&&(strcmp(botonMaquina2,'off')))
+    
+    botonMaquina1 = get(handles.botonCargarDatosMaquina1,'Enable');
+    botonMaquina2 = get(handles.botonCargarDatosMaquina2,'Enable');
+    
+    if(strcmp(botonMaquina1,'off') && (strcmp(botonMaquina2,'off')))
         set(handles.botonVerificarDatos,'Enable','on');
     else
         set(handles.botonVerificarDatos,'Enable','off');
@@ -137,83 +141,95 @@ function [] = borrarDatos(tabla)
     set(tabla, 'ColumnWidth', {'auto'});
 
 
-function [cargada]= cargarDatosTabla(lista, tabla)
-    cargada=0
+function [cargada]= cargarDatosTabla(tabla)
+    cargada = 0;
     [fileName, path]= uigetfile({'*.xls;*.xlsx'},'Abrir archivos Excel');
     if isequal(fileName, 0) 
         return 
     else 
         ruta = strcat(path, fileName);
         [~, ~, numeroTexto] = xlsread(ruta);
-        [nuevaTabla,espacioVacio] = determinarNuevaTabla(numeroTexto); 
-        if espacioVacio==1
-            msgbox('Verifique que la tabla no tenga Espacios en Blanco','Alerta','warn');
+        [nuevaTabla, espacioVacio] = determinarNuevaTabla(numeroTexto); 
+        if espacioVacio == 1
+            msgbox('Verifique que la tabla no tenga espacios en blanco','Alerta','warn');
         else
-            [filas, columnas] = size(nuevaTabla);
-            set(tabla, 'Data', nuevaTabla(2:filas, 2:columnas));
-            set(tabla, 'RowName', nuevaTabla(2:filas, 1));
-            set(tabla, 'ColumnName', nuevaTabla(1, 2:columnas));
-            set(tabla, 'ColumnWidth', {50});
-            %set(lista, 'String', nuevaTabla(2:filas, 1));
-            cargada=1;
-        end
-        
+            if iscell(nuevaTabla) 
+                [filas, columnas] = size(nuevaTabla);
+                set(tabla, 'Data', nuevaTabla(2:filas, 2:columnas));
+                set(tabla, 'RowName', nuevaTabla(2:filas, 1));
+                set(tabla, 'ColumnName', nuevaTabla(1, 2:columnas));
+                set(tabla, 'ColumnWidth', {50});
+                %set(lista, 'String', nuevaTabla(2:filas, 1));
+                cargada = 1;
+            end
+           
+        end        
     end
 
-function [filaInicial, columnaInicial,tieneFormato] = determinarIndicesNuevaTabla(tabla, filas, columnas)
-    tieneFormato=0;
+function [filaInicial, columnaInicial, tieneFormato] = determinarIndicesNuevaTabla(tabla, filas, columnas)
+    tieneFormato = 0;
+    columnaInicial = 0;
+    filaInicial = 0;
     for i = 1:filas
         for j = 1:columnas
             if (~(isnan(cell2mat(tabla(i,j)))))
-            if((strcmp(upper(tabla(i,j)), 'E') || strcmp(upper(tabla(i,j)), 'ESTADO')))
-                filaInicial = i;
-                columnaInicial = j;
-                tieneFormato=1;
-                return;
-            end
+                if((strcmp(upper(cell2mat(tabla(i,j))), 'E') || strcmp(upper(cell2mat(tabla(i,j))), 'ESTADO')))
+                    filaInicial = i;
+                    columnaInicial = j;
+                    tieneFormato = 1;
+                    return;
+                end
             end
         end
     end
     
 function [nuevaTabla, espacioVacio] = determinarNuevaTabla(numeroTexto)
-    espacioVacio=0;
+    espacioVacio = 0;
     [filas, columnas] = size(numeroTexto);
-    [filaInicial, columnaInicial,tieneFormato] = determinarIndicesNuevaTabla(numeroTexto, filas, columnas);
-    if (tieneFormato ==1)
+    [filaInicial, columnaInicial, tieneFormato] = determinarIndicesNuevaTabla(numeroTexto, filas, columnas);
+    nuevaTabla = 0;
+    if (tieneFormato == 1)
         for i = filaInicial:filas
             for j = columnaInicial:columnas
                 if(isnan(cell2mat((numeroTexto(i,j)))))
-                    espacioVacio=1;
+                    espacioVacio = 1;
                     return
                 end
             end
         end
         nuevaTabla = numeroTexto(filaInicial:filas, columnaInicial:columnas);
     else
-        msgbox('Formato de Tabla Incorrecto!','Alerta','warn');
+        msgbox('Formato de tabla incorrecto!','Alerta','warn');
     end
     
-    function [esFinita] = verificarMaquinaFinita(tabla)
-        datos = get(tabla,'Data');
-        estados = get(tabla,'RowName');
-        [filas,columnas] = size(datos);
-        numeroEstados=size(estados);
+function [esFinita] = verificarMaquinaFinita(tabla)
+    datos = get(tabla,'Data');
+    estados = get(tabla,'RowName');
+    [filas,columnas] = size(datos);
+    numeroEstados=size(estados);
             
-        for i=1:filas
-            for j=1:columnas-1
+    for i=1:filas
+        for j=1:columnas-1
                 encontrada=0;
                 for k=1:numeroEstados
-                    if(strcmp(datos(i,j),estados(k)))
-                        encontrada=1;
-                        break;
+                    if ischar(cell2mat(datos(i, j)))
+                        if strcmp(cell2mat(datos(i,j)), estados(k))
+                           encontrada = 1;
+                           break;
+                        end    
+                    else
+                        if(strcmp(mat2str(cell2mat(datos(i,j))), estados(k)))
+                            encontrada = 1;
+                            break;
+                        end
                     end
                 end
                 if(encontrada==0)
                     esFinita=0;
                     return;
                 end  
-            end
         end
+   end
         esFinita=1;
          
 function [] = cargarTablaHomomorfismo(handles)
@@ -274,9 +290,16 @@ function [estado] = funcionPhi(estado, handles)
     
     [filas, columnas] = size(phi);
     for i = 1:filas
-        if(strcmp(phi(i, 1), estado))
-            estado = phi(i, 2);
-            return;
+        if(ischar(estado))
+            if(strcmp(phi(i, 1), estado))
+                estado = phi(i, 2)
+                return;
+            end
+        else    
+            if(strcmp(phi(i, 1), mat2str(cell2mat(estado))))
+                estado = phi(i, 2)
+                return;
+            end
         end
     end
     
